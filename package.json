@@ -1,0 +1,32 @@
+{
+  "name": "service-io-migration-tool",
+  "version": "1.0.0",
+  "description": "Database migration tool: PHP/Laravel DB → Kotlin/Exposed DB",
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx src/index.ts",
+    "migrate:phase0": "tsx src/index.ts --phase=0",
+    "migrate:phase1": "tsx src/index.ts --phase=1",
+    "migrate:phase2": "tsx src/index.ts --phase=2",
+    "migrate:phase3": "OLD_DB_SSL=true tsx src/index.ts --phase=3",
+    "migrate:phase4": "tsx src/index.ts --phase=4",
+    "migrate:phase5": "tsx src/index.ts --phase=5",
+    "migrate:verify": "tsx src/index.ts --phase=6",
+    "tunnel": "ssh -i ../dev-mgmt-ec2 -L 5433:brokertool-dev-rds.cr8yquyy22mv.us-east-1.rds.amazonaws.com:5432 ec2-user@98.82.196.48 -N -o StrictHostKeyChecking=no -o ServerAliveInterval=30",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.25.0",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "pg": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "@types/pg": "^8.16.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
