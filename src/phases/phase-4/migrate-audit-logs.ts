@@ -38,11 +38,7 @@ export async function migrateAuditLogs(
 
   if (total === 0) return;
 
-  // TODO: Remove limit after testing
-  const testLimit = 1000;
-  log(PHASE, `[TEST MODE] Limiting to ${testLimit} rows`);
-
-  while (offset < testLimit) {
+  while (offset < total) {
     const { rows } = await oldDb.query(
       `SELECT id, model, model_id, event, user_id, payload, created_at, updated_at
        FROM audit_logs WHERE model_id IS NOT NULL
@@ -59,15 +55,9 @@ export async function migrateAuditLogs(
     ];
 
     const values = rows.map((r) => {
-      const payload = r.payload ? JSON.stringify(r.payload) : null;
-      let oldValues: string | null = null;
-      let newValues: string | null = null;
-
-      if (r.event === "deleted") {
-        oldValues = payload;
-      } else {
-        newValues = payload;
-      }
+      const payload = r.payload;
+      const before = payload?.before ? JSON.stringify(payload.before) : null;
+      const after = payload?.after ? JSON.stringify(payload.after) : null;
 
       return [
         r.id,
@@ -75,8 +65,8 @@ export async function migrateAuditLogs(
         r.model ? transformModelType(r.model) : "unknown",
         r.model_id,
         r.event,
-        oldValues,
-        newValues,
+        before,
+        after,
         r.created_at ?? new Date(),
         r.updated_at ?? new Date(),
         null,           // deleted_at
