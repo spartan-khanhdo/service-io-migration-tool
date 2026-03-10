@@ -103,7 +103,9 @@ export async function migrateUsers(
         r.pending_invite ?? false,
         twoFactorMethod,
         r.two_factor_secret,
-        r.two_factor_recovery_codes,
+        // pg auto-parses json columns → PHP stores codes as integers [163184,590775], Kotlin expects strings ["163184","590775"]
+        // Must map each code to String before JSON.stringify to match Kotlin's Array<String> deserialization
+        r.two_factor_recovery_codes != null ? JSON.stringify(r.two_factor_recovery_codes.map(String)) : null,
         r.two_factor_set_at,
         r.last_activity,
         r.remember_token,
@@ -133,7 +135,10 @@ export async function migrateUsers(
     }
 
     const columnList = columns.map((c) => `"${c}"`).join(", ");
-    const sql = `INSERT INTO "users" (${columnList}) VALUES ${placeholders.join(", ")} ON CONFLICT ("id") DO NOTHING`;
+    // ON CONFLICT DO NOTHING (no column specified) handles ALL unique constraints:
+    // - id (primary key) — re-running migration
+    // - idx_users_email (email WHERE deleted_at IS NULL) — pre-existing data
+    const sql = `INSERT INTO "users" (${columnList}) VALUES ${placeholders.join(", ")} ON CONFLICT DO NOTHING`;
 
     const result = await newDb.query(sql, flatValues);
     totalInserted += result.rowCount ?? 0;
