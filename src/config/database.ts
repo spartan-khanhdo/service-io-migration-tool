@@ -42,10 +42,12 @@ export function createOldDbPool(): pg.Pool {
 
 export function createNewDbPool(): pg.Pool {
   const config = getNewDbConfig();
+  const useSSL = process.env.NEW_DB_SSL !== "false";
   return new pg.Pool({
     ...config,
     max: 10,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
+    ssl: useSSL ? { rejectUnauthorized: false } : false,
   });
 }
