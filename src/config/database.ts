@@ -37,6 +37,9 @@ export function createOldDbPool(): pg.Pool {
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     ssl: useSSL ? { rejectUnauthorized: false } : false,
+    // Enforce read-only at PostgreSQL session level — any INSERT/UPDATE/DELETE will be
+    // rejected by the server even if code accidentally attempts a write.
+    options: "-c default_transaction_read_only=on",
   });
 }
 
