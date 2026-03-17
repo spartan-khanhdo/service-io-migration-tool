@@ -1,6 +1,7 @@
 import pg from "pg";
 import { IdMappingStore } from "../../mapping/id-mapping-store.js";
-import { log, logError } from "../../util/logger.js";
+import { log } from "../../util/logger.js";
+import { batchInsert } from "../../util/batch.js";
 
 const PHASE = "Phase 5.6";
 
@@ -42,37 +43,29 @@ export async function migrateNotificationBatches(
   log(PHASE, `Found ${rows.length} notification_batches (skipped ${skipped} with NULL recipient_id)`);
   if (rows.length === 0) return;
 
-  let inserted = 0;
-  for (const r of rows) {
-    try {
-      const result = await newDb.query(
-        `INSERT INTO notification_batches
-         (id, user_id, batch_type, recipient_email, event, data,
-          batch_identifier, sent_at, is_admin, business_id,
-          created_at, updated_at, deleted_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-         ON CONFLICT (id) DO NOTHING`,
-        [
-          r.id,
-          r.recipient_id,                                      // → user_id
-          r.notification_batch_type || "unknown",              // → batch_type
-          r.recipient_email ?? null,
-          r.event ?? null,
-          r.data ? JSON.stringify(r.data) : null,              // → data JSONB
-          r.batch_identifier ?? null,
-          r.sent_at ?? null,                                   // sent_at
-          r.is_admin ?? false,
-          r.business_id ?? null,
-          r.created_at ?? new Date(),
-          r.updated_at ?? new Date(),
-          null,
-        ]
-      );
-      inserted += result.rowCount ?? 0;
-    } catch (error) {
-      logError(PHASE, `Skipped notification_batch id=${r.id}`, error);
-    }
-  }
+  const columns = [
+    "id", "user_id", "batch_type", "recipient_email", "event", "data",
+    "batch_identifier", "sent_at", "is_admin", "business_id",
+    "created_at", "updated_at", "deleted_at",
+  ];
+
+  const values = rows.map((r) => [
+    r.id,
+    r.recipient_id,                                      // → user_id
+    r.notification_batch_type || "unknown",              // → batch_type
+    r.recipient_email ?? null,
+    r.event ?? null,
+    r.data ? JSON.stringify(r.data) : null,              // → data JSONB
+    r.batch_identifier ?? null,
+    r.sent_at ?? null,
+    r.is_admin ?? false,
+    r.business_id ?? null,
+    r.created_at ?? new Date(),
+    r.updated_at ?? new Date(),
+    null,
+  ]);
+
+  const inserted = await batchInsert(newDb, "notification_batches", columns, values, { phase: PHASE });
 
   log(PHASE, `Notification batches migration complete: ${inserted} inserted out of ${rows.length}`);
 }
