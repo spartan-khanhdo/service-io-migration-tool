@@ -30,17 +30,25 @@ export async function migrateBusinessMessages(
   log(PHASE, `Found ${rows.length} business_messages in old DB`);
   if (rows.length === 0) return;
 
+  const skipped = rows.filter((r) => r.message == null);
+  if (skipped.length > 0) {
+    log(PHASE, `WARNING: Skipping ${skipped.length} business_messages with NULL message`);
+  }
+
+  const validRows = rows.filter((r) => r.message != null);
+  if (validRows.length === 0) return;
+
   const columns = [
     "id", "business_id", "sender_id", "content",
     "message_type", "is_updated",
     "attachments", "created_at", "updated_at", "deleted_at",
   ];
 
-  const values = rows.map((r) => [
+  const values = validRows.map((r) => [
     r.id,
     r.business_id,
     r.sender_id,
-    r.message || "",            // message → content (NOT NULL)
+    r.message,                  // message → content (NOT NULL, nulls skipped above)
     r.message_type ?? null,
     r.is_updated ?? false,
     r.attachments ? JSON.stringify(r.attachments) : null,
@@ -50,5 +58,5 @@ export async function migrateBusinessMessages(
   ]);
 
   const inserted = await batchInsert(newDb, "business_messages", columns, values, { phase: PHASE });
-  log(PHASE, `Business messages migration complete: ${inserted} inserted out of ${rows.length}`);
+  log(PHASE, `Business messages migration complete: ${inserted} inserted out of ${rows.length} (skipped: ${skipped.length})`);
 }

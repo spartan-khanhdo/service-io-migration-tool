@@ -8,14 +8,11 @@ const PHASE = "Phase 4.4";
 /**
  * Migrate offices table.
  *
- * Old: offices(id, brokerage_id, name, address, created_by, modified_by, deleted_at, deleted_by, created_at, updated_at)
- * New (post-049): offices(id, brokerage_id, name, address, created_at, updated_at, deleted_at, created_by, modified_by, deleted_by)
+ * Old: offices(id, name, address, created_by, modified_by, deleted_at, deleted_by, created_at, updated_at)
+ *   Note: old DB does NOT have brokerage_id — relationship is managed via user_brokerage_offices.
  *
- * Migration 049 dropped: address_line1, address_line2, city, state, zip_code, country,
- *   phone, fax, email, is_headquarters, is_active, latitude, longitude
- * Migration 049 added: address (TEXT)
- *
- * Now direct mapping — old `address` → new `address`.
+ * New: offices(id, name, address, created_at, updated_at, deleted_at, created_by, modified_by, deleted_by)
+ *   Note: brokerage_id dropped from new DB to align with PHP schema.
  */
 export async function migrateOffices(
   oldDb: pg.Pool,
@@ -25,7 +22,7 @@ export async function migrateOffices(
   log(PHASE, "Starting offices migration...");
 
   const { rows } = await oldDb.query(
-    `SELECT id, brokerage_id, name, address, created_by, modified_by,
+    `SELECT id, name, address, created_by, modified_by,
             deleted_at, deleted_by, created_at, updated_at
      FROM offices ORDER BY created_at NULLS LAST`
   );
@@ -34,14 +31,13 @@ export async function migrateOffices(
   if (rows.length === 0) return;
 
   const columns = [
-    "id", "brokerage_id", "name", "address",
+    "id", "name", "address",
     "created_at", "updated_at", "deleted_at",
     "created_by", "modified_by", "deleted_by",
   ];
 
   const values = rows.map((r) => [
     r.id,
-    r.brokerage_id,
     r.name,
     r.address || null,
     r.created_at ?? new Date(),

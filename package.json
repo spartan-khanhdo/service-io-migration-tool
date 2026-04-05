@@ -13,6 +13,7 @@
     "migrate:phase5": "tsx src/index.ts --phase=5",
     "migrate:verify": "tsx src/index.ts --phase=6",
     "tunnel": "ssh -i ../dev-mgmt-ec2 -L 5433:brokertool-dev-rds.cr8yquyy22mv.us-east-1.rds.amazonaws.com:5432 ec2-user@98.82.196.48 -N -o StrictHostKeyChecking=no -o ServerAliveInterval=30",
+    "migrate:truncate": "tsx src/truncate.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

@@ -30,16 +30,24 @@ export async function migrateBusinessNotes(
   log(PHASE, `Found ${rows.length} business_notes in old DB`);
   if (rows.length === 0) return;
 
+  const skipped = rows.filter((r) => r.message == null);
+  if (skipped.length > 0) {
+    log(PHASE, `WARNING: Skipping ${skipped.length} business_notes with NULL message`);
+  }
+
+  const validRows = rows.filter((r) => r.message != null);
+  if (validRows.length === 0) return;
+
   const columns = [
     "id", "business_id", "author_id", "content", "note_type",
     "is_updated", "attachments", "created_at", "updated_at", "deleted_at",
   ];
 
-  const values = rows.map((r) => [
+  const values = validRows.map((r) => [
     r.id,
     r.business_id,
     r.sender_id,                // sender_id → author_id
-    r.message || "",            // message → content (NOT NULL)
+    r.message,                  // message → content (NOT NULL, nulls skipped above)
     r.message_type,             // message_type → note_type
     r.is_updated ?? false,      // is_updated (added in 053)
     r.attachments ? JSON.stringify(r.attachments) : null,
@@ -49,5 +57,5 @@ export async function migrateBusinessNotes(
   ]);
 
   const inserted = await batchInsert(newDb, "business_notes", columns, values, { phase: PHASE });
-  log(PHASE, `Business notes migration complete: ${inserted} inserted out of ${rows.length}`);
+  log(PHASE, `Business notes migration complete: ${inserted} inserted out of ${rows.length} (skipped: ${skipped.length})`);
 }
