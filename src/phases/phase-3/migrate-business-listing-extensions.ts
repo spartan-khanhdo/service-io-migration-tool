@@ -23,7 +23,7 @@ export async function migrateBusinessListingExtensions(
   const { rows } = await oldDb.query(`
     SELECT
       id, business_id, organization_listing_id, site_id,
-      is_home_based, is_absentee_owner,
+      is_home_based, is_absentee_owner, listing_type,
       number_of_part_time_employees, number_of_contractors, employee_notes,
       web_address, street_address, zip,
       ebitda, inventory_value, ffe, is_inventory_included_in_asking_price,
@@ -33,6 +33,7 @@ export async function migrateBusinessListingExtensions(
       location_description, current_and_prior_use, year_of_construction,
       rent, rental_term,
       organization_status, listing_status,
+      applicant_first_name, applicant_last_name, applicant_email, applicant_phone,
       created_at, updated_at
     FROM business_listing_extensions
   `);
@@ -42,7 +43,7 @@ export async function migrateBusinessListingExtensions(
 
   const columns = [
     "id", "business_id", "organization_listing_id", "site_id",
-    "is_home_based", "is_absentee_owner",
+    "is_home_based", "is_absentee_owner", "listing_type",
     "number_of_part_time_employees", "number_of_contractors", "employee_notes",
     "web_address", "street_address", "zip",
     "ebitda", "inventory_value", "ffe", "is_inventory_included_in_asking_price",
@@ -52,6 +53,7 @@ export async function migrateBusinessListingExtensions(
     "location_description", "current_and_prior_use", "year_of_construction",
     "rent", "rental_term",
     "organization_status", "listing_status",
+    "applicant_first_name", "applicant_last_name", "applicant_email", "applicant_phone",
     "created_at", "updated_at", "deleted_at",
   ];
 
@@ -62,6 +64,7 @@ export async function migrateBusinessListingExtensions(
     r.site_id,
     r.is_home_based,
     r.is_absentee_owner,
+    r.listing_type ?? null,
     r.number_of_part_time_employees,
     r.number_of_contractors,
     r.employee_notes,
@@ -88,6 +91,10 @@ export async function migrateBusinessListingExtensions(
     r.rental_term,
     r.organization_status,
     r.listing_status,
+    r.applicant_first_name ?? null,
+    r.applicant_last_name ?? null,
+    r.applicant_email ?? null,
+    r.applicant_phone ?? null,
     r.created_at ?? new Date(),
     r.updated_at ?? new Date(),
     null, // deleted_at

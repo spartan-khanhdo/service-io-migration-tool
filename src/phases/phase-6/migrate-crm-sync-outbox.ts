@@ -26,6 +26,7 @@ export async function migrateCrmSyncOutbox(
   const { rows } = await oldDb.query(
     `SELECT id, ordinal, type, entity_id, event, payload, status,
             retry_count, last_retry_at, last_error, processed_at,
+            response_status_code, response_payload,
             created_at, updated_at
      FROM crm_sync_outbox ORDER BY created_at NULLS LAST`
   );
@@ -36,6 +37,7 @@ export async function migrateCrmSyncOutbox(
   const columns = [
     "id", "ordinal", "type", "entity_id", "event", "payload", "status",
     "retry_count", "last_retry_at", "last_error", "processed_at",
+    "response_status_code", "response_payload",
     "created_at", "updated_at", "deleted_at",
   ];
 
@@ -51,6 +53,8 @@ export async function migrateCrmSyncOutbox(
     r.last_retry_at,
     r.last_error,
     r.processed_at,
+    r.response_status_code ?? null,
+    r.response_payload ? JSON.stringify(r.response_payload) : null,
     r.created_at ?? new Date(),
     r.updated_at ?? new Date(),
     null, // deleted_at

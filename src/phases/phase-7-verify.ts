@@ -61,6 +61,7 @@ const TABLE_CHECKS: TableCheck[] = [
   { oldTable: "broker_profiles", newTable: "broker_profiles" },
   { oldTable: "brokerages", newTable: "brokerages" },
   { oldTable: "offices", newTable: "offices" },
+  { oldTable: "brokerage_offices", newTable: "brokerage_offices" },
   {
     oldTable: "user_brokerage_offices",
     newTable: "user_brokerage_offices",
@@ -101,6 +102,7 @@ const TABLE_CHECKS: TableCheck[] = [
   { oldTable: "user_business_messages", newTable: "user_business_messages" },
   { oldTable: "user_business_notes", newTable: "user_business_notes" },
   { oldTable: "crm_sync_outbox", newTable: "crm_sync_outbox" },
+  { oldTable: "crm_reference_mappings", newTable: "crm_reference_mappings" },
   { oldTable: "settings_assets", newTable: "settings_assets" },
   {
     oldTable: "settings_asset_properties",

@@ -11,6 +11,14 @@ import { migrateNotificationBatches } from "./migrate-notification-batches.js";
 export async function runPhase5(oldDb: pg.Pool, newDb: pg.Pool, idMap: IdMappingStore): Promise<void> {
   log("Phase 5", "=== Starting Phase 5: Tokens & Misc ===");
 
+  // Truncate all phase-5 tables before migration to ensure clean state.
+  log("Phase 5", "Truncating phase-5 tables...");
+  await newDb.query(`
+    TRUNCATE notification_batches, document_upload_tokens,
+             business_upload_tokens, business_claim_tokens,
+             api_keys, user_agreements
+  `);
+
   await migrateUserAgreements(oldDb, newDb, idMap);
   await migrateApiKeys(oldDb, newDb, idMap);
   await migrateBusinessClaimTokens(oldDb, newDb, idMap);

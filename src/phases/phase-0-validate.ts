@@ -43,6 +43,7 @@ const OLD_TABLES = [
   "document_upload_tokens",
   "backyard_partner_mappings",
   "notification_batches",
+  "crm_reference_mappings",
 ];
 
 const NEW_TABLES = [
@@ -70,6 +71,7 @@ const NEW_TABLES = [
   "broker_profiles",
   "brokerages",
   "offices",
+  "brokerage_offices",
   "user_brokerage_offices",
   "document_requests",
   "business_notes",
@@ -86,6 +88,7 @@ const NEW_TABLES = [
   "organization_admins",
   // "backyard_partner_mappings", // TODO: Not yet in Flyway migrations
   "notification_batches",
+  "crm_reference_mappings",
 ];
 
 async function testConnection(pool: pg.Pool, label: string): Promise<boolean> {

@@ -23,7 +23,7 @@ export async function migrateBrokerages(
   log(PHASE, "Starting brokerages migration...");
 
   const { rows } = await oldDb.query(
-    `SELECT id, name, created_by, modified_by, deleted_at, deleted_by, created_at, updated_at
+    `SELECT id, organization_id, name, created_by, modified_by, deleted_at, deleted_by, created_at, updated_at
      FROM brokerages ORDER BY created_at NULLS LAST`
   );
 
@@ -31,13 +31,14 @@ export async function migrateBrokerages(
   if (rows.length === 0) return;
 
   const columns = [
-    "id", "name",
+    "id", "organization_id", "name",
     "created_at", "updated_at", "deleted_at",
     "created_by", "modified_by", "deleted_by",
   ];
 
   const values = rows.map((r) => [
     r.id,
+    r.organization_id ?? null,
     r.name,
     r.created_at ?? new Date(),
     r.updated_at ?? new Date(),

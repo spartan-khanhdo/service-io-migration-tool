@@ -30,13 +30,10 @@ export async function migrateBusinessMessages(
   log(PHASE, `Found ${rows.length} business_messages in old DB`);
   if (rows.length === 0) return;
 
-  const skipped = rows.filter((r) => r.message == null);
-  if (skipped.length > 0) {
-    log(PHASE, `WARNING: Skipping ${skipped.length} business_messages with NULL message`);
+  const nullMessageRows = rows.filter((r) => r.message == null);
+  if (nullMessageRows.length > 0) {
+    log(PHASE, `INFO: ${nullMessageRows.length} business_messages have NULL message — migrating with content='' and deleted_at set`);
   }
-
-  const validRows = rows.filter((r) => r.message != null);
-  if (validRows.length === 0) return;
 
   const columns = [
     "id", "business_id", "sender_id", "content",
@@ -44,19 +41,20 @@ export async function migrateBusinessMessages(
     "attachments", "created_at", "updated_at", "deleted_at",
   ];
 
-  const values = validRows.map((r) => [
+  const now = new Date();
+  const values = rows.map((r) => [
     r.id,
     r.business_id,
     r.sender_id,
-    r.message,                  // message → content (NOT NULL, nulls skipped above)
+    r.message ?? "",             // NULL message → empty string (content is NOT NULL); soft-deleted below
     r.message_type ?? null,
     r.is_updated ?? false,
     r.attachments ? JSON.stringify(r.attachments) : null,
-    r.created_at ?? new Date(),
-    r.updated_at ?? new Date(),
-    null,                       // deleted_at
+    r.created_at ?? now,
+    r.updated_at ?? now,
+    r.message == null ? now : null,  // soft-delete rows that had no content
   ]);
 
   const inserted = await batchInsert(newDb, "business_messages", columns, values, { phase: PHASE });
-  log(PHASE, `Business messages migration complete: ${inserted} inserted out of ${rows.length} (skipped: ${skipped.length})`);
+  log(PHASE, `Business messages migration complete: ${inserted} inserted out of ${rows.length} (null-content soft-deleted: ${nullMessageRows.length})`);
 }
