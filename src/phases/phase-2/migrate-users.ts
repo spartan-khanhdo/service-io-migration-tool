@@ -1,6 +1,7 @@
 import pg from "pg";
 import { IdMappingStore } from "../../mapping/id-mapping-store.js";
 import { log, logProgress } from "../../util/logger.js";
+import { rewriteS3Url, isS3RewriteEnabled } from "../../util/s3-url-rewriter.js";
 
 const PHASE = "Phase 2.4";
 const BATCH_SIZE = 500;
@@ -27,6 +28,9 @@ export async function migrateUsers(
   _idMap: IdMappingStore
 ): Promise<void> {
   log(PHASE, "Starting users migration...");
+  if (isS3RewriteEnabled()) {
+    log(PHASE, "S3 URL rewriting enabled for profile_photo_path");
+  }
 
   // Count total first
   const countResult = await oldDb.query(`SELECT COUNT(*) as count FROM users`);
@@ -91,7 +95,7 @@ export async function migrateUsers(
         r.phone,
         r.phone_extension ?? null,
         r.linkedin,
-        r.profile_photo_path,
+        rewriteS3Url(r.profile_photo_path),
         r.address,
         r.bio_url ?? null,
         r.communication_consent_at ?? null,

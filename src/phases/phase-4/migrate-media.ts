@@ -7,6 +7,17 @@ import { transformModelType } from "../../parser/polymorphic.js";
 const PHASE = "Phase 4.1";
 
 /**
+ * Disk name → S3 key prefix mapping.
+ * Matches PHP config/filesystems.php disk prefix settings.
+ */
+const DISK_PREFIX: Record<string, string> = {
+  "aws-public": "public/",
+  "aws-private": "private/",
+  "aws-documents": "documents/",
+  "aws-temporary": "temporary/",
+};
+
+/**
  * Migrate media table.
  *
  * Old: media(id BIGINT auto-inc, uuid UUID, model_type VARCHAR, model_id UUID, ...)
@@ -15,7 +26,9 @@ const PHASE = "Phase 4.1";
  * Key: Old `uuid` column becomes new `id`.
  * Build mapping: old BIGINT id → old uuid (for any future reference).
  * model_type: App\Models\Business → business (polymorphic transform)
- * path: construct from collection_name/uuid/file_name
+ * path: construct from disk prefix + old BIGINT id + file_name
+ *       (Spatie DefaultPathGenerator uses BIGINT id, NOT uuid)
+ *       e.g. disk=aws-public, id=3791, file=photo.jpg → "public/3791/photo.jpg"
  * Added (046): manipulations (JSONB - Spatie MediaLibrary)
  * Relaxed (046): mime_type, path now nullable
  */
@@ -66,7 +79,7 @@ export async function migrateMedia(
     r.generated_conversions ? JSON.stringify(r.generated_conversions) : null,
     r.mime_type,
     r.size,
-    `${r.collection_name}/${r.uuid}/${r.file_name}`,  // construct path
+    `${DISK_PREFIX[r.disk] ?? ""}${r.id}/${r.file_name}`,  // S3 key: disk prefix + old BIGINT id + file_name
     r.manipulations ? JSON.stringify(r.manipulations) : null,
     r.custom_properties ? JSON.stringify(r.custom_properties) : null,
     r.responsive_images ? JSON.stringify(r.responsive_images) : null,

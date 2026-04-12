@@ -3,6 +3,7 @@ import { IdMappingStore } from "../../mapping/id-mapping-store.js";
 import { log } from "../../util/logger.js";
 import { batchInsert } from "../../util/batch.js";
 import { parseNaicsType } from "../../parser/composite-type.js";
+import { rewriteS3UrlsInJson } from "../../util/s3-url-rewriter.js";
 
 const PHASE = "Phase 3.1";
 
@@ -128,8 +129,8 @@ export async function migrateBusinesses(
         r.applications_count ?? 0,
         r.last_application_submitted_at,
         r.number_of_documents ?? 0,
-        r.cover_image ? JSON.stringify(r.cover_image) : null,
-        r.stamped_cover_image ? JSON.stringify(r.stamped_cover_image) : null,
+        r.cover_image ? JSON.stringify(rewriteS3UrlsInJson(r.cover_image)) : null,
+        r.stamped_cover_image ? JSON.stringify(rewriteS3UrlsInJson(r.stamped_cover_image)) : null,
         r.source ?? "manual",
         r.slug ?? null,
         r.ytd_pnl_expiry_date ?? null,
